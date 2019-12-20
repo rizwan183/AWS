@@ -1,0 +1,25 @@
+import boto3
+def lambda_handler(event, context):
+     client=boto3.client('ses')
+     response = client.send_email(
+     Source='',
+     Destination={
+        'ToAddresses':[
+            ''] },
+     Message={
+        'Subject': {
+            'Data': 'Hello This is Test Mail',
+            'Charset': 'UTF8'
+        },
+        'Body': {
+            'Text': {
+                'Data': 'Hello This is Test Mail',
+                'Charset': 'UTF8'
+            },
+            'Html': {
+                'Data': 'Hi This is Mail test',
+                'Charset': 'UTF8'
+            }
+        }
+     })
+     return { "Message":"Mail sent SucessFully"}
