@@ -1,0 +1,17 @@
+import boto3
+import json
+def lambda_handler(event, context):
+    sqs=boto3.client('sqs')
+    sns=boto3.client('sns')
+    sns.subscribe(
+            TopicArn='arn:aws:sns:ap-south-1:910502929390:rizwan_test',
+            Protocol='sqs',
+            Endpoint='arn:aws:sqs:ap-south-1:910502929390:R_sqs',
+            Attributes={
+            
+            },
+            ReturnSubscriptionArn=True|False
+            )
+    return{
+            "message":"Success"
+        }

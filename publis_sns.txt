@@ -1,0 +1,13 @@
+import json
+import boto3
+def lambda_handler(event, context):
+    sns=boto3.client('sns')
+    #response=sns.create_topic(Name='rizwan_test')
+    response=sns.publish(
+        TopicArn='arn:aws:sns:ap-south-1:910502929390:rizwan_test',
+        Message='Hello This is Test Topic'
+        )
+    return {
+        'response':response,
+        'message':'Topic Created SuccessFully'
+    }

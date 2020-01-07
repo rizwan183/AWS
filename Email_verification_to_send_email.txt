@@ -1,0 +1,9 @@
+import json
+import boto3
+def lambda_handler(event, context):
+    ses=boto3.client('ses')
+    response=ses.verify_email_address(EmailAddress='r.ansari12996@gmail.com',)
+    return {
+        'response':response,
+        'message':'SuccessFully'
+    }
