@@ -1,0 +1,9 @@
+table.update_item(             Key={
+                        'id': item['id']
+                    },
+                    UpdateExpression='SET value1 = :val1, value2 = :val2',
+                    ExpressionAttributeValues={
+                        ':val1': someValue1,
+                        ':val2': someValue2
+                    }
+                )
