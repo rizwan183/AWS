@@ -1,0 +1,13 @@
+import boto3
+import json
+dynamodb=boto3.resource('dynamodb')
+table=dynamodb.Table('table_name)
+def get_item(event,context):
+    response = table.get_item(
+            Key={
+                'year': year,
+                'title': title
+            }
+        )
+    item = response['Item']
+    return {"statusCode":200, 'code':json,dumps(item)}
