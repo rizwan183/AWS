@@ -1,0 +1,80 @@
+import boto3
+import io
+from PIL import Image, ImageDraw, ExifTags, ImageColor
+import cv2
+
+def show_faces(photo, bucket):
+    client = boto3.client('rekognition')
+    photo1 = cv2.imread("/home/rewoke/sagemaker/machine_learning/zz.jpg")
+    # Load image from S3 bucket
+    s3_connection = boto3.resource('s3')
+    s3_object = s3_connection.Object(bucket, photo)
+    s3_response = s3_object.get()
+    stream = io.BytesIO(s3_response['Body'].read())
+    image = Image.open(stream)
+    # Call DetectFaces
+    response = client.detect_labels(Image={'S3Object': {'Bucket': bucket, 'Name': photo}})
+    imgWidth, imgHeight = image.size
+    draw = ImageDraw.Draw(image)
+    print(response)
+    left1=0
+    top1=0
+    width1=0
+    height1=0
+    # calculate and display bounding boxes for each detected face
+    print('Detected hand for ' + photo)
+    d1=response.get('Labels')
+    for j in d1:
+        if j.get('Name')=='Person':
+            print(j.get('Name'))
+            d2=d1[1]
+            for handDetail in j['Instances']:
+                print(handDetail)
+                box = handDetail['BoundingBox']
+                left = imgWidth * box['Left']
+                print(left)
+                top = imgHeight * box['Top']
+                width = imgWidth * box['Width']
+                height = imgHeight * box['Height']
+                print('Left: ' + '{0:.0f}'.format(left))
+                print('Top: ' + '{0:.0f}'.format(top))
+                print('Width: ' + "{0:.0f}".format(width))
+                print('Height: ' + "{0:.0f}".format(height))
+                left1=imgWidth * box['Left']
+                top1=imgHeight * box['Top']
+                width1=imgWidth * box['Width']
+                height1=imgHeight * box['Height']
+                points = (
+                    (left, top),
+                    (left + width, top),
+                    (left + width, top + height),
+                    (left, top + height),
+                    (left, top)
+
+                )
+                draw.line(points, fill='#00d400', width=2)
+                image1 = cv2.rectangle(photo1,(int(left1), int(1)),(int(left1+width1),int(top1+height1)),(255,255,255),-1)
+                cv2.imshow("image",image1)
+                cv2.waitKey(0)
+    image.show()
+    print(int(top1))
+    print(left1)
+    print(width1)
+    print(height1)
+    a=(10,10)
+    b=(5,5)
+    c=(255,255,255)
+   # image1 = cv2.rectangle(photo1,(int(left1), int(1)),(int(left1+width1),int(top1+height1)),(255,255,255),-1)
+   # cv2.imshow("image",image1)
+   # cv2.waitKey(0)
+    return len(d2['Instances'])
+def main():
+    bucket = "rizwan1"
+    photo = "zz.jpg"
+
+    faces_count = show_faces(photo, bucket)
+    print("hand detected: " + str(faces_count))
+
+
+if __name__ == "__main__":
+    main()
