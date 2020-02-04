@@ -1,0 +1,82 @@
+
+import boto3
+import cv2
+import numpy as np
+client = boto3.client('rekognition')
+
+def detect_labels_local_file(photo,k):
+    img = cv2.imread(photo)
+
+    rgb_planes = cv2.split(img)
+
+    result_planes = []
+    result_norm_planes = []
+    for plane in rgb_planes:
+        dilated_img = cv2.dilate(plane, np.ones((7, 7), np.uint8))
+        bg_img = cv2.medianBlur(dilated_img, 21)
+        diff_img = 255 - cv2.absdiff(plane, bg_img)
+        norm_img = cv2.normalize(diff_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+        result_planes.append(diff_img)
+        result_norm_planes.append(norm_img)
+
+    result = cv2.merge(result_planes)
+    result_norm = cv2.merge(result_norm_planes)
+   # cv2.imshow('re',result)
+   # cv2.imshow('re_re', result_norm)
+    gray = cv2.cvtColor(result_norm, cv2.COLOR_BGR2GRAY)
+    # Find Canny edges
+    edged = cv2.Canny(gray, 0, 400)
+    cv2.waitKey(0)
+
+    with open(photo, 'rb') as image:
+        response = client.detect_labels(Image={'Bytes': image.read()})
+
+    print('Detected labels in ' + photo)
+    print(response)
+    d1 = response.get('Labels')
+    print(result_norm.shape)
+    imgHeight,imgWidth,channel=result_norm.shape
+    for j in d1:
+        if j.get('Name') == 'Book':
+            print(j.get('Name'))
+            d2 = d1[1]
+            for handDetail in j['Instances']:
+                print(handDetail)
+                box = handDetail['BoundingBox']
+                left = imgWidth * box['Left']
+                print(left)
+                top = imgHeight * box['Top']
+                width = imgWidth * box['Width']
+                height = imgHeight * box['Height']
+                print('Left: ' + '{0:.0f}'.format(left))
+                print('Top: ' + '{0:.0f}'.format(top))
+                print('Width: ' + "{0:.0f}".format(width))
+                print('Height: ' + "{0:.0f}".format(height))
+                left1 = imgWidth * box['Left']
+                top1 = imgHeight * box['Top']
+                width1 = imgWidth * box['Width']
+                height1 = imgHeight * box['Height']
+                print(left1,top1,width1,height1)
+                crop = result_norm[int(top1):int(top1) + int(height1), int(left1):int(left1) + int(width1)]
+               # cv2.imshow('Image', crop)
+                cv2.imwrite(r'image{k}.jpg'.format(k=k),crop)
+                cv2.waitKey(0)
+                k=k+1
+
+    return len(response['Labels'])
+
+
+def main():
+    import os
+    import glob
+    image_file = glob.glob('/home/rewoke/Downloads/Photos/*.jpg')
+    k=1
+    for image in image_file:
+        k=k+1
+        image_address = os.path.abspath(image)
+        label_count = detect_labels_local_file(image_address,k)
+        print(image_address)
+
+
+if __name__ == "__main__":
+    main()
