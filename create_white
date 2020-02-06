@@ -1,0 +1,110 @@
+
+import boto3
+import cv2
+import numpy as np
+minimum_detection_ratio = 0.1
+
+
+def clahe(img, clip_limit=2.0, grid_size=(8,8)):
+    clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=grid_size)
+    return clahe.apply(img)
+
+def process(src):
+
+    # HSV thresholding to get rid of as much background as possible
+    hsv = cv2.cvtColor(src.copy(), cv2.COLOR_BGR2HSV)
+    lower_blue = np.array([0, 0, 120])
+    upper_blue = np.array([180, 38, 255])
+    mask = cv2.inRange(hsv, lower_blue, upper_blue)
+    result = cv2.bitwise_and(src, src, mask=mask)
+    b, g, r = cv2.split(result)
+    g = clahe(g , 5, (3, 3))
+
+    # Adaptive Thresholding to isolate the bed
+    img_blur = cv2.blur(g, (9, 9))
+    img_th = cv2.adaptiveThreshold(img_blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                   cv2.THRESH_BINARY, 51, 2)
+
+    contours, hierarchy = cv2.findContours(img_th,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+
+    # Filter the rectangle by choosing only the big ones
+    # and choose the brightest rectangle as the bed
+    max_brightness = 0
+    canvas = src.copy()
+    max_coordinates = None
+    max_area = 0
+    max_crop = None
+    src_shapes = src.shape
+    src_width = src_shapes[1]
+    src_height = src_shapes[0]
+    for cnt in contours:
+        rect = cv2.boundingRect(cnt)
+        x, y, w, h = rect
+        if w*h > src_height*src_width * minimum_detection_ratio:
+            mask = np.zeros(src.shape, np.uint8)
+            mask[y:y+h, x:x+w] = src[y:y+h, x:x+w]
+            brightness = np.sum(mask)
+            if brightness > max_brightness:
+                brightest_rectangle = rect
+                max_brightness = brightness
+            cv2.rectangle(mask, (x, y), (x + w, y + h), (0, 0, 255), 1)
+            crop = mask[y:y + h, x:x + w]
+            # cv2.imshow("d",crop)
+            # cv2.waitKey(0)
+            print(w,src_width,h,src_height)
+            if w != src_width and h != src_height:
+                print("crop_value", x, y, w, h)
+                area=w*h
+                if area > max_area:
+                    max_area = area
+                    max_coordinates = [x, y, w, h]
+                    max_crop = crop
+
+    # print(max_area,max_coordinates,max_crop)
+    return max_crop
+
+
+
+def image_white(img):
+    rgb_planes = cv2.split(img)
+    result_planes = []
+    result_norm_planes = []
+    for plane in rgb_planes:
+        dilated_img = cv2.dilate(plane, np.ones((7, 7), np.uint8))
+        bg_img = cv2.medianBlur(dilated_img, 21)
+        diff_img = 255 - cv2.absdiff(plane, bg_img)
+        norm_img = cv2.normalize(diff_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+        result_planes.append(diff_img)
+        result_norm_planes.append(norm_img)
+    try:
+        result = cv2.merge(result_planes)
+        result_norm = cv2.merge(result_norm_planes)
+        return result_norm
+    except Exception as e:
+        print(e)
+
+
+
+def main():
+    import os
+    import glob
+    image_file = glob.glob('/home/rewoke/Downloads/Photos/*.jpg')
+    counter = 1
+    for image in image_file:
+        image_address = os.path.abspath(image)
+        imag=cv2.imread(image_address)
+        img=process(imag)
+        cv2.imwrite(r"/home/rewoke/crop_image/{number}.jpg".format(number=counter),img)
+        counter=counter+1
+
+    crop_image = glob.glob('/home/rewoke/crop_image/*.jpg')
+    for image in crop_image:
+        image_address = os.path.abspath(image)
+        imag = cv2.imread(image_address)
+        img = image_white(imag)
+        cv2.imwrite(image_address, img)
+
+
+
+if __name__ == "__main__":
+    main()
