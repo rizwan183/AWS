@@ -1,0 +1,23 @@
+table.update_item(
+
+  Key={
+
+    'id': item_id
+
+  },
+
+  UpdateExpression='SET #ts = :val1',
+
+  ExpressionAttributeValues={
+
+    ":val1": new_timestamp
+
+  },
+
+  ExpressionAttributeNames={
+
+    "#ts": "timestamp"
+
+  }
+
+)
