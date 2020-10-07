@@ -1,0 +1,33 @@
+{
+    "Version": "2012-10-17",
+    "Id": "Policy1357935677554",
+    "Statement": [
+        {
+            "Sid": "DelegateS3Access",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::destinationaccountnumber:root"
+            },
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::bucketsinger",
+                "arn:aws:s3:::bucketsinger/*"
+            ]
+        },
+        {
+            "Sid": "CrossAccountS3",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::destinationaccountnumber:root"
+            },
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::bucketsinger",
+                "arn:aws:s3:::bucketsinger/*"
+            ]
+        }
+    ]
+}
