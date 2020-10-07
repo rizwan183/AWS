@@ -1,3 +1,5 @@
+
+source account
 {
     "Version": "2012-10-17",
     "Id": "Policy1357935677554",
@@ -27,6 +29,38 @@
             "Resource": [
                 "arn:aws:s3:::bucketsinger",
                 "arn:aws:s3:::bucketsinger/*"
+            ]
+        }
+    ]
+}
+
+
+
+destination account
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetObject"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::vmnotes",
+                "arn:aws:s3:::vmnotes*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": [
+                "arn:aws:s3:::vmnotes",
+                "arn:aws:s3:::vmnotes*"
             ]
         }
     ]
