@@ -1,0 +1,1 @@
+frequencyData=frequencyTable.scan(FilterExpression=Key('id').eq(frequencyId))
